@@ -1,0 +1,17 @@
+# Ambiente
+ab/.env
+
+# Banco de dados
+ab/db/*.db
+
+# Dependências
+ab/vendor/
+
+# IDE / OS
+
+.idea/
+.vscode/
+*.swp
+*.swo
+Thumbs.db
+.DS_Store
