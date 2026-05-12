@@ -353,6 +353,25 @@ Depois, configure no `config.php`:
 
 Acesse `ab/painel.php` para monitorar os acessos.
 
+### Login
+
+O painel possui autenticação configurável via `config.php`:
+
+```php
+'painel_usuario' => 'admin',
+'painel_senha' => 'admin',
+```
+
+- Com credenciais definidas, o painel exige login para acessar
+- Para desativar o login (painel aberto), deixe ambos vazios:
+
+```php
+'painel_usuario' => '',
+'painel_senha' => '',
+```
+
+> **Importante:** Altere as credenciais padrão (`admin`/`admin`) antes de usar em produção.
+
 ### Funcionalidades
 
 - **Aba Acessos:** Todos os registros de detecção com IP, cidade, país, provedor, proxy, VPN, bot, navegador, SO, dispositivo, status e motivo do bloqueio
@@ -360,8 +379,6 @@ Acesse `ab/painel.php` para monitorar os acessos.
 - **Filtros:** Todos, Bloqueados, Liberados
 - **Busca:** Por IP, URL, cidade, provedor, hostname, navegador, SO
 - **Limpar dados:** Botão para apagar todos os registros
-
-> **Importante:** O painel não possui autenticação. Em produção, proteja o acesso com autenticação HTTP, firewall ou outra medida.
 
 ## Estrutura de arquivos
 

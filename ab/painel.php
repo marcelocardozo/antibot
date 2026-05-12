@@ -1,4 +1,131 @@
 <?php
+session_start();
+define('ANTIBOT_INTERNAL', true);
+$config = include __DIR__ . '/config.php';
+
+$painelUsuario = $config['painel_usuario'] ?? '';
+$painelSenha = $config['painel_senha'] ?? '';
+$loginErro = false;
+
+if ($painelUsuario !== '' && $painelSenha !== '') {
+    // Logout
+    if (($_GET['acao'] ?? '') === 'logout') {
+        session_destroy();
+        header('Location: painel.php');
+        exit;
+    }
+
+    // Processar login
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'login') {
+        if ($_POST['usuario'] === $painelUsuario && $_POST['senha'] === $painelSenha) {
+            $_SESSION['ab_painel_auth'] = true;
+            header('Location: painel.php');
+            exit;
+        } else {
+            $loginErro = true;
+        }
+    }
+
+    // Se não autenticado, mostrar form de login
+    if (empty($_SESSION['ab_painel_auth'])) {
+        ?>
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Antibot - Login</title>
+            <style>
+                * { box-sizing: border-box; margin: 0; padding: 0; }
+                body {
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                    background: #0f1117;
+                    color: #e1e4e8;
+                    min-height: 100vh;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .login-box {
+                    background: #161b22;
+                    border: 1px solid #30363d;
+                    border-radius: 10px;
+                    padding: 36px 32px;
+                    width: 100%;
+                    max-width: 380px;
+                }
+                .login-box h1 {
+                    font-size: 1.3rem;
+                    font-weight: 600;
+                    color: #f0f0f0;
+                    margin-bottom: 24px;
+                    text-align: center;
+                }
+                .login-box label {
+                    display: block;
+                    font-size: 0.82rem;
+                    color: #8b949e;
+                    margin-bottom: 6px;
+                }
+                .login-box input[type="text"],
+                .login-box input[type="password"] {
+                    width: 100%;
+                    padding: 10px 12px;
+                    font-size: 0.9rem;
+                    background: #0f1117;
+                    border: 1px solid #30363d;
+                    border-radius: 6px;
+                    color: #e1e4e8;
+                    outline: none;
+                    margin-bottom: 16px;
+                }
+                .login-box input:focus { border-color: #1f6feb; }
+                .login-box button {
+                    width: 100%;
+                    padding: 10px;
+                    font-size: 0.9rem;
+                    font-weight: 600;
+                    background: #1f6feb;
+                    border: none;
+                    border-radius: 6px;
+                    color: #fff;
+                    cursor: pointer;
+                }
+                .login-box button:hover { background: #1a5fd1; }
+                .login-erro {
+                    padding: 10px 14px;
+                    margin-bottom: 16px;
+                    background: rgba(248, 81, 73, 0.15);
+                    border: 1px solid #f85149;
+                    border-radius: 6px;
+                    color: #f85149;
+                    font-size: 0.82rem;
+                    text-align: center;
+                }
+            </style>
+        </head>
+        <body>
+        <div class="login-box">
+            <h1>Antibot - Painel</h1>
+            <?php if ($loginErro): ?>
+                <div class="login-erro">Usuário ou senha incorretos.</div>
+            <?php endif; ?>
+            <form method="post">
+                <input type="hidden" name="acao" value="login">
+                <label>Usuário</label>
+                <input type="text" name="usuario" autofocus required>
+                <label>Senha</label>
+                <input type="password" name="senha" required>
+                <button type="submit">Entrar</button>
+            </form>
+        </div>
+        </body>
+        </html>
+        <?php
+        exit;
+    }
+}
+
 $db = new SQLite3(__DIR__ . '/db/antibot.db');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'limpar') {
@@ -358,7 +485,12 @@ function esc($v) {
 </head>
 <body>
 <div class="container">
-    <h1>Antibot - Painel</h1>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <h1 style="margin-bottom:0;">Antibot - Painel</h1>
+        <?php if (!empty($_SESSION['ab_painel_auth'])): ?>
+            <a href="?acao=logout" style="font-size:0.82rem;color:#8b949e;text-decoration:none;padding:6px 14px;background:#161b22;border:1px solid #30363d;border-radius:6px;">Sair</a>
+        <?php endif; ?>
+    </div>
 
     <div class="abas">
         <a href="<?= queryString(['aba' => 'acessos', 'pagina' => 1]) ?>" class="<?= $aba === 'acessos' ? 'ativo' : '' ?>">Acessos</a>

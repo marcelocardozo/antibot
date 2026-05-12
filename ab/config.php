@@ -1,7 +1,5 @@
 <?php
-header('Content-Type: application/json');
-
-echo json_encode([
+$config = [
 
     // Página inicial onde o antibot roda a detecção completa
     // Nas demais páginas, o script apenas verifica se o visitante já foi aprovado
@@ -44,6 +42,16 @@ echo json_encode([
     // Se vazio ([]), aceita qualquer país
     // Exemplo: ['BR'] aceita apenas Brasil, ['BR', 'PT'] aceita Brasil e Portugal
     'paises_permitidos' => ['BR'],
+
+    // ════════════════════════════════════════════════════════════════════════
+    // PAINEL ADMINISTRATIVO
+    // ════════════════════════════════════════════════════════════════════════
+    //
+    // Credenciais de acesso ao painel (ab/painel.php).
+    // Se ambos estiverem vazios (''), o painel fica aberto sem login.
+    //
+    'painel_usuario' => 'admin',
+    'painel_senha' => 'admin',
 
     // ════════════════════════════════════════════════════════════════════════
     // REGRAS DE DETECÇÃO
@@ -347,4 +355,14 @@ echo json_encode([
         'math_diferente' => ['ativo' => true, 'pts' => 10],
 
     ],
-]);
+];
+
+// Quando acessado via HTTP, retorna JSON sem credenciais do painel
+if (!defined('ANTIBOT_INTERNAL')) {
+    header('Content-Type: application/json');
+    $public = $config;
+    unset($public['painel_usuario'], $public['painel_senha']);
+    echo json_encode($public);
+}
+
+return $config;
