@@ -12,6 +12,15 @@ $_abIp = $_SERVER['HTTP_CF_CONNECTING_IP']
     ?? $_SERVER['REMOTE_ADDR']
     ?? '';
 
+// Em desenvolvimento local, substituir localhost pelo TEST_IP do .env
+if (in_array($_abIp, ['127.0.0.1', '::1'], true)) {
+    $_abEnvFile = __DIR__ . '/../.env';
+    $_abEnv = file_exists($_abEnvFile) ? parse_ini_file($_abEnvFile) : [];
+    if (!empty($_abEnv['TEST_IP'])) {
+        $_abIp = $_abEnv['TEST_IP'];
+    }
+}
+
 if ($_abIp !== '') {
     $_abUa = $_SERVER['HTTP_USER_AGENT'] ?? '';
 
