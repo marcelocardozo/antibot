@@ -7,20 +7,17 @@ echo json_encode([
     // Nas demais páginas, o script apenas verifica se o visitante já foi aprovado
     'paginaInicial' => 'index.php',
 
-    // URL de redirecionamento quando o visitante é aprovado
+    // URL de redirecionamento quando o visitante é aprovado, se vazio não redireciona
     'redirectUrl' => '',
 
     // Tempo mínimo da animação de verificação (ms)
     'tempoMinimo' => 5000,
 
-    // Mensagens exibidas durante a verificação
-    'mensagens' => [
-        'Iniciando verificação',
-        'Analisando conexão',
-        'Verificando localização',
-        'Validando dispositivo',
-        'Finalizando',
-    ],
+    // Template da tela de carregamento exibida durante a verificação
+    // Arquivo HTML dentro de ab/templates/
+    // Opções disponíveis: 'spinner.html' (padrão), 'cloudflare.html'
+    'telaCarregamento' => 'cloudflare.html',
+
 
     // Score mínimo para bloquear o visitante (padrão: 50)
     // Se a soma dos pontos das regras ativadas >= este valor, o visitante é bloqueado
@@ -57,7 +54,7 @@ echo json_encode([
     //   'pts'   => número       — pontos somados ao score quando detectado
     //
     // Se o score total >= scoreMinimo, o visitante é bloqueado.
-    // Remover uma regra daqui faz o antibot usar o valor padrão interno.
+    // Todas as regras devem estar listadas aqui.
     // Para desativar uma regra, defina 'ativo' => false.
     //
     'regras' => [

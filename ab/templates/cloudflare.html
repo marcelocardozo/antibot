@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificação de segurança</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background-color: #fff;
+            color: #000;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 60px 20px 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            width: 100%;
+            margin: 80px auto 0;
+            padding: 0 40px;
+        }
+        
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        
+        .logo {
+            width: 48px;
+            height: 48px;
+            flex-shrink: 0;
+        }
+        
+        .domain {
+            font-size: 32px;
+            font-weight: 700;
+            color: #000;
+            letter-spacing: -0.5px;
+        }
+        
+        .subtitle {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 14px;
+            color: #000;
+        }
+        
+        .description {
+            font-size: 15px;
+            line-height: 1.5;
+            color: #333;
+            margin-bottom: 28px;
+            max-width: 750px;
+        }
+        
+        .cloudflare-widget {
+            background-color: #f5f5f5;
+            border: 1px solid #d0d0d0;
+            border-radius: 4px;
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 300px;
+            height: 70px;
+        }
+        
+        .verifying {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #000;
+            font-size: 14px;
+        }
+        
+        .spinner {
+            width: 22px;
+            height: 22px;
+            border: 2px solid #d0d0d0;
+            border-top-color: #43c267;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        
+        .cloudflare-brand {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+        
+        .cf-logo {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            color: #000;
+        }
+        
+        .cf-icon {
+            width: 20px;
+            height: 12px;
+        }
+        
+        .cf-links {
+            font-size: 9px;
+            color: #555;
+        }
+        
+        .cf-links a {
+            color: #555;
+            text-decoration: underline;
+        }
+        
+        .cf-links a:hover {
+            color: #000;
+        }
+        
+        .footer {
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding-top: 20px;
+            border-top: 1px solid #d0d0d0;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .ray-id {
+            margin-bottom: 8px;
+        }
+        
+        .footer-links a {
+            color: #1a6ed8;
+            text-decoration: underline;
+        }
+        
+        .footer-links a:hover {
+            color: #0d4ea3;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 0 10px;
+                margin-top: 40px;
+            }
+            .domain {
+                font-size: 22px;
+            }
+            .subtitle {
+                font-size: 18px;
+            }
+            .description {
+                font-size: 14px;
+            }
+            .cloudflare-widget {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="header">
+            <!-- Logo JusBrasil (seta para cima azul/amarela) -->
+
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="19" fill="none" viewBox="0 0 40 19"><path fill="#f6821f" d="m27.16 18.507.204-.735c.242-.873.152-1.68-.255-2.274-.374-.547-.998-.868-1.755-.906l-14.346-.19a.3.3 0 0 1-.127-.034.3.3 0 0 1-.099-.09.31.31 0 0 1-.03-.27.4.4 0 0 1 .128-.185.37.37 0 0 1 .205-.081l14.479-.192c1.717-.082 3.576-1.536 4.227-3.31l.826-2.25a.55.55 0 0 0 .022-.298C29.702 3.29 25.94 0 21.44 0c-4.146 0-7.667 2.792-8.928 6.673a4.1 4.1 0 0 0-2.978-.86c-1.99.206-3.589 1.877-3.786 3.953a4.6 4.6 0 0 0 .11 1.547C2.605 11.41 0 14.189 0 17.603q0 .459.065.911c.009.07.042.134.093.18.05.047.116.072.183.073l26.485.003h.007a.34.34 0 0 0 .205-.076.36.36 0 0 0 .122-.187"/><path fill="#fbad41" d="M31.94 8.153q-.2 0-.397.01a.2.2 0 0 0-.062.014.2.2 0 0 0-.091.061.24.24 0 0 0-.054.098l-.564 2.033c-.243.874-.152 1.68.254 2.274.375.547.998.868 1.756.906l3.058.191a.3.3 0 0 1 .123.035.28.28 0 0 1 .142.22.3.3 0 0 1-.015.14.4.4 0 0 1-.128.185.37.37 0 0 1-.205.08l-3.177.192c-1.725.083-3.585 1.536-4.235 3.31l-.23.626a.18.18 0 0 0 .017.16.17.17 0 0 0 .134.08h10.941a.3.3 0 0 0 .176-.06.3.3 0 0 0 .106-.16 8.5 8.5 0 0 0 .291-2.216c0-4.517-3.51-8.18-7.84-8.18"/></svg>
+            <span class="domain"></span>
+        </div>
+
+        <h1 class="subtitle">Executando verificação de segurança</h1>
+
+        <p class="description">
+            Este site utiliza um serviço de segurança para proteção contra bots maliciosos. Esta página é exibida enquanto o site verifica se você não é um bot.
+        </p>
+
+        <div class="cloudflare-widget">
+            <div class="verifying">
+                <div class="spinner"></div>
+                <span>Verificando...</span>
+            </div>
+            <div class="cloudflare-brand">
+                <div class="cf-logo">
+                    <svg class="cf-icon" viewBox="0 0 50 30" xmlns="http://www.w3.org/2000/svg">
+          <path d="M37 18c0-1-.5-2-1.5-2.5C34 15 32 14.5 30 14.5c-.5 0-1 0-1.5.5-.5-3-3-5-6-5-2.5 0-5 1.5-6 4-.5-.5-1.5-.5-2-.5-2 0-3.5 1.5-3.5 3.5 0 .5 0 1 .5 1.5-2 0-3.5 1.5-3.5 3.5 0 .5 0 1 0 1.5h28c.5-.5 1-1.5 1-2.5z" fill="#f48120"/>
+          <path d="M38.5 14c0-.5 0-1 0-1.5-1-4-4.5-7-9-7-5 0-9 4-9 9 0 .5 0 1 0 1.5 .5-.5 1.5-.5 2-.5 3 0 5.5 2 6 5 .5-.5 1-.5 1.5-.5 2 0 4 .5 5.5 1.5 1.5-2 2.5-4.5 3-7z" fill="#faad3f"/>
+        </svg> CLOUDFLARE
+                </div>
+                <div class="cf-links">
+                    <a href="#">Privacidade</a> • <a href="#">Ajuda</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div class="ray-id">Ray ID: 9fa992e6b8f2cdce</div>
+        <div class="footer-links">
+            Desempenho e segurança da <a href="#">Cloudflare</a> | <a href="#">Privacidade</a>
+        </div>
+    </div>
+
+<script>
+    (function () {
+        var host = window.location.hostname;
+        document.title = host;
+        document.querySelector('.domain').textContent = host;
+    })();
+</script>
+
+</body>
+
+</html>

@@ -6,93 +6,10 @@
  *
  * O script auto-detecta o caminho da pasta ab/ pelo atributo src,
  * busca as configurações via ab/config.php (API JSON) e inicializa.
- * Não gera nenhum HTML — a página deve fornecer os elementos:
- *
- *   #abProgressBar  — elemento cuja width será animada (0% → 100%)
- *   #abStatusText   — elemento cujo textContent exibe as mensagens de progresso
- *
- * Configurações em ab/config.php (JSON):
- *
- *   redirectUrl   (string)  — URL de redirecionamento em caso de sucesso
- *   tempoMinimo   (number)  — Tempo mínimo da animação em ms (padrão: 5000)
- *   scoreMinimo   (number)  — Score mínimo para bloquear (padrão: 50)
- *   mensagens     (array)   — Mensagens de progresso
- *   regras        (object)  — Regras de detecção { label: { ativo, pts } }
+ * Todas as configurações são definidas exclusivamente em ab/config.php.
  */
 var AntiBot = (function () {
     'use strict';
-
-    var DEFAULTS = {
-        redirectUrl: '/',
-        tempoMinimo: 5000,
-        scoreMinimo: 50,
-        mensagens: [
-            'Iniciando verificação',
-            'Analisando conexão',
-            'Verificando localização',
-            'Validando dispositivo',
-            'Finalizando'
-        ]
-    };
-
-    var DEFAULT_REGRAS = {
-        webdriver:          { ativo: true, pts: 80 },
-        chromedriver:       { ativo: true, pts: 80 },
-        selenium:           { ativo: true, pts: 80 },
-        puppeteer:          { ativo: true, pts: 80 },
-        puppeteer_obj:      { ativo: true, pts: 80 },
-        playwright:         { ativo: true, pts: 80 },
-        playwright_key:     { ativo: true, pts: 80 },
-        cypress:            { ativo: true, pts: 80 },
-        phantomjs:          { ativo: true, pts: 80 },
-        nightmare:          { ativo: true, pts: 80 },
-        webdriverio:        { ativo: true, pts: 80 },
-        testcafe:           { ativo: true, pts: 80 },
-        browserless:        { ativo: true, pts: 80 },
-        stack_automacao:    { ativo: true, pts: 80 },
-        ua_suspeito:        { ativo: true, pts: 60 },
-        webdriver_patched:  { ativo: true, pts: 60 },
-        ua_ferramenta:      { ativo: true, pts: 80 },
-        ua_curto:           { ativo: true, pts: 30 },
-        chrome_falso:       { ativo: true, pts: 30 },
-        tela_zero:          { ativo: true, pts: 30 },
-        webgl_software:     { ativo: true, pts: 30 },
-        janela_zero:        { ativo: true, pts: 25 },
-        canvas_vazio:       { ativo: true, pts: 25 },
-        mobile_sem_touch:   { ativo: true, pts: 25 },
-        platform_mismatch:  { ativo: true, pts: 20 },
-        perm_inconsistente: { ativo: true, pts: 20 },
-        audio_vazio:        { ativo: true, pts: 20 },
-        sem_color_depth:    { ativo: true, pts: 20 },
-        sem_idiomas:        { ativo: true, pts: 15 },
-        timing_rapido:      { ativo: true, pts: 15 },
-        sem_cpu_cores:      { ativo: true, pts: 15 },
-        sem_webgl:          { ativo: true, pts: 15 },
-        sem_midia:          { ativo: true, pts: 15 },
-        rtt_zero:           { ativo: true, pts: 15 },
-        sem_chrome_runtime: { ativo: true, pts: 15 },
-        poucas_fontes:      { ativo: true, pts: 15 },
-        sem_timezone:       { ativo: true, pts: 15 },
-        janela_minima:      { ativo: true, pts: 15 },
-        canvas_erro:        { ativo: true, pts: 15 },
-        sem_accept_lang:    { ativo: true, pts: 15 },
-        sem_plugins:        { ativo: true, pts: 10 },
-        sem_speech:         { ativo: true, pts: 10 },
-        sem_shared_buffer:  { ativo: true, pts: 10 },
-        iframe:             { ativo: true, pts: 10 },
-        bateria_fake:       { ativo: true, pts: 10 },
-        sem_notification:   { ativo: true, pts: 10 },
-        sem_accept_enc:     { ativo: true, pts: 10 },
-        accept_generico:    { ativo: true, pts: 10 },
-        conn_close:         { ativo: true, pts: 10 },
-        sem_worker:         { ativo: true, pts: 10 },
-        math_diferente:     { ativo: true, pts: 10 },
-        webgl_erro:         { ativo: true, pts: 10 },
-        timezone_erro:      { ativo: true, pts: 10 },
-        sem_interacao:      { ativo: true, pts: 10 },
-        historico_curto:    { ativo: true, pts: 5 },
-        cdp_detectado:      { ativo: true, pts: 5 }
-    };
 
     /* ───────── auto-detect ab/ path ───────── */
 
@@ -111,37 +28,6 @@ var AntiBot = (function () {
             }
         }
         return '/ab';
-    }
-
-    /* ───────── helpers ───────── */
-
-    function merge(defaults, overrides) {
-        var result = {};
-        for (var k in defaults) {
-            if (defaults.hasOwnProperty(k)) result[k] = defaults[k];
-        }
-        for (var k2 in overrides) {
-            if (overrides.hasOwnProperty(k2) && overrides[k2] !== undefined) result[k2] = overrides[k2];
-        }
-        return result;
-    }
-
-    function mergeRegras(overrides) {
-        var result = {};
-        for (var k in DEFAULT_REGRAS) {
-            if (DEFAULT_REGRAS.hasOwnProperty(k)) {
-                result[k] = { ativo: DEFAULT_REGRAS[k].ativo, pts: DEFAULT_REGRAS[k].pts };
-            }
-        }
-        if (overrides) {
-            for (var k2 in overrides) {
-                if (overrides.hasOwnProperty(k2) && result[k2]) {
-                    if (overrides[k2].ativo !== undefined) result[k2].ativo = overrides[k2].ativo;
-                    if (overrides[k2].pts !== undefined) result[k2].pts = overrides[k2].pts;
-                }
-            }
-        }
-        return result;
     }
 
     /* ───────── DETECÇÃO ───────── */
@@ -481,8 +367,8 @@ var AntiBot = (function () {
     function start(cfg, AB_PATH) {
         var URL_404 = AB_PATH + '/templates/404.html';
         var TEMPO_MINIMO = cfg.tempoMinimo;
-        var SCORE_MINIMO = cfg.scoreMinimo || 50;
-        var regras = mergeRegras(cfg.regras);
+        var SCORE_MINIMO = cfg.scoreMinimo;
+        var regras = cfg.regras;
         var inicio = Date.now();
 
         // Run client-side detection
@@ -516,8 +402,7 @@ var AntiBot = (function () {
             var motivos = [];
             if (ehBot) motivos.push('score=' + detection.getScore() + ' (' + detection.getHits().join(', ') + ')');
             if (cfg.bloquear_bot !== false && bot === 'true') motivos.push('bot');
-            var paisesPermitidos = cfg.paises_permitidos || [];
-            if (paisesPermitidos.length > 0 && isocode !== null && paisesPermitidos.indexOf(isocode) === -1) motivos.push('pais=' + isocode);
+            if (cfg.paises_permitidos.length > 0 && isocode !== null && cfg.paises_permitidos.indexOf(isocode) === -1) motivos.push('pais=' + isocode);
             if (cfg.bloquear_proxy !== false && proxy === 'yes') motivos.push('proxy');
             if (cfg.bloquear_vpn !== false && vpn === 'yes') motivos.push('vpn');
 
@@ -592,21 +477,26 @@ var AntiBot = (function () {
 
     var _abSpinner = null;
 
-    // Esconde a página e mostra spinner até a verificação concluir
+    // Esconde a página e mostra overlay até a verificação concluir
     function esconderPagina() {
         document.documentElement.style.visibility = 'hidden';
         document.documentElement.style.overflow = 'hidden';
 
         _abSpinner = document.createElement('div');
         _abSpinner.id = 'ab-spinner';
-        _abSpinner.innerHTML =
-            '<style>' +
-            '#ab-spinner{position:fixed;inset:0;z-index:2147483647;background:#fff;display:flex;align-items:center;justify-content:center;visibility:visible!important}' +
-            '#ab-spinner .sp{width:40px;height:40px;border:3px solid #e0e0e0;border-top-color:#888;border-radius:50%;animation:ab-spin .7s linear infinite}' +
-            '@keyframes ab-spin{to{transform:rotate(360deg)}}' +
-            '</style>' +
-            '<div class="sp"></div>';
+        _abSpinner.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:#fff;visibility:visible!important';
         document.documentElement.appendChild(_abSpinner);
+    }
+
+    // Carrega o template da tela de carregamento dentro do overlay
+    function carregarTelaCarregamento(cfg, abPath) {
+        if (!_abSpinner) return;
+        var tela = cfg.telaCarregamento;
+
+        var iframe = document.createElement('iframe');
+        iframe.src = abPath + '/templates/' + tela;
+        iframe.style.cssText = 'width:100%;height:100%;border:none;';
+        _abSpinner.appendChild(iframe);
     }
 
     // Libera a página após aprovação confirmada no banco
@@ -623,10 +513,10 @@ var AntiBot = (function () {
 
         fetch(AB_PATH + '/config.php')
             .then(function (r) { return r.json(); })
-            .then(function (apiConfig) {
-                var cfg = merge(DEFAULTS, apiConfig);
+            .then(function (cfg) {
+                carregarTelaCarregamento(cfg, AB_PATH);
 
-                var paginaIni = cfg.paginaInicial || '/';
+                var paginaIni = cfg.paginaInicial;
                 var pathname = window.location.pathname;
                 // Verifica se é a página inicial considerando subpastas e acesso sem filename
                 // Ex: paginaInicial='/index.php' deve casar com '/antibot/index.php' e '/antibot/'
@@ -712,7 +602,7 @@ var AntiBot = (function () {
                 }
             })
             .catch(function () {
-                start(merge(DEFAULTS, {}), AB_PATH);
+                liberarPagina();
             });
     }
 

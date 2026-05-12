@@ -298,7 +298,7 @@ function esc($v) {
             font-size: 0.9rem;
         }
 
-        /* Paginacao */
+        /* Paginação */
         .paginacao {
             display: flex;
             align-items: center;
@@ -362,7 +362,7 @@ function esc($v) {
 
     <div class="abas">
         <a href="<?= queryString(['aba' => 'acessos', 'pagina' => 1]) ?>" class="<?= $aba === 'acessos' ? 'ativo' : '' ?>">Acessos</a>
-        <a href="<?= queryString(['aba' => 'navegacao', 'nav_pagina' => 1]) ?>" class="<?= $aba === 'navegacao' ? 'ativo' : '' ?>">Navegacao</a>
+        <a href="<?= queryString(['aba' => 'navegacao', 'nav_pagina' => 1]) ?>" class="<?= $aba === 'navegacao' ? 'ativo' : '' ?>">Navegação</a>
     </div>
 
     <?php if (($_GET['msg'] ?? '') === 'limpo'): ?>
@@ -414,7 +414,7 @@ function esc($v) {
                     <th>IP</th>
                     <th>URL</th>
                     <th>Cidade</th>
-                    <th>Pais</th>
+                    <th>País</th>
                     <th>Provedor</th>
                     <th>Proxy</th>
                     <th>VPN</th>
@@ -440,21 +440,21 @@ function esc($v) {
                         <?php if ($r['proxy'] === 'yes'): ?>
                             <span class="badge badge-red">sim</span>
                         <?php else: ?>
-                            <span class="badge badge-gray">nao</span>
+                            <span class="badge badge-gray">não</span>
                         <?php endif; ?>
                     </td>
                     <td>
                         <?php if ($r['vpn'] === 'yes'): ?>
                             <span class="badge badge-yellow">sim</span>
                         <?php else: ?>
-                            <span class="badge badge-gray">nao</span>
+                            <span class="badge badge-gray">não</span>
                         <?php endif; ?>
                     </td>
                     <td>
                         <?php if ($r['bot'] === 'true'): ?>
                             <span class="badge badge-red">sim</span>
                         <?php else: ?>
-                            <span class="badge badge-gray">nao</span>
+                            <span class="badge badge-gray">não</span>
                         <?php endif; ?>
                     </td>
                     <td><?= esc($r['client_name']) ?> <?= esc($r['client_version']) ?></td>
@@ -477,13 +477,13 @@ function esc($v) {
 
     <?php if ($totalPaginas > 1): ?>
     <div class="paginacao">
-        <span>Pagina <?= $pagina ?> de <?= $totalPaginas ?> (<?= $total ?> registros)</span>
+        <span>Página <?= $pagina ?> de <?= $totalPaginas ?> (<?= $total ?> registros)</span>
         <div class="pag-links">
             <?php if ($pagina > 1): ?>
                 <a href="<?= queryString(['pagina' => $pagina - 1]) ?>">Anterior</a>
             <?php endif; ?>
             <?php if ($pagina < $totalPaginas): ?>
-                <a href="<?= queryString(['pagina' => $pagina + 1]) ?>">Proxima</a>
+                <a href="<?= queryString(['pagina' => $pagina + 1]) ?>">Próxima</a>
             <?php endif; ?>
         </div>
     </div>
@@ -522,7 +522,7 @@ function esc($v) {
 
     <div class="table-wrap">
         <?php if (empty($navRegistros)): ?>
-            <div class="empty-msg">Nenhum registro de navegacao encontrado.</div>
+            <div class="empty-msg">Nenhum registro de navegação encontrado.</div>
         <?php else: ?>
         <table>
             <thead>
@@ -532,7 +532,7 @@ function esc($v) {
                     <th>IP</th>
                     <th>URL</th>
                     <th>Cidade</th>
-                    <th>Pais</th>
+                    <th>País</th>
                     <th>Provedor</th>
                     <th>Proxy</th>
                     <th>VPN</th>
@@ -558,21 +558,21 @@ function esc($v) {
                         <?php if ($n['proxy'] === 'yes'): ?>
                             <span class="badge badge-red">sim</span>
                         <?php else: ?>
-                            <span class="badge badge-gray">nao</span>
+                            <span class="badge badge-gray">não</span>
                         <?php endif; ?>
                     </td>
                     <td>
                         <?php if ($n['vpn'] === 'yes'): ?>
                             <span class="badge badge-yellow">sim</span>
                         <?php else: ?>
-                            <span class="badge badge-gray">nao</span>
+                            <span class="badge badge-gray">não</span>
                         <?php endif; ?>
                     </td>
                     <td>
                         <?php if ($n['bot'] === 'true'): ?>
                             <span class="badge badge-red">sim</span>
                         <?php else: ?>
-                            <span class="badge badge-gray">nao</span>
+                            <span class="badge badge-gray">não</span>
                         <?php endif; ?>
                     </td>
                     <td><?= esc($n['client_name']) ?> <?= esc($n['client_version']) ?></td>
@@ -595,13 +595,13 @@ function esc($v) {
 
     <?php if ($navTotalPaginas > 1): ?>
     <div class="paginacao">
-        <span>Pagina <?= $navPagina ?> de <?= $navTotalPaginas ?> (<?= $navTotal ?> registros)</span>
+        <span>Página <?= $navPagina ?> de <?= $navTotalPaginas ?> (<?= $navTotal ?> registros)</span>
         <div class="pag-links">
             <?php if ($navPagina > 1): ?>
                 <a href="<?= queryString(['aba' => 'navegacao', 'nav_filtro' => $navFiltro, 'nav_busca' => $navBusca, 'nav_pagina' => $navPagina - 1]) ?>">Anterior</a>
             <?php endif; ?>
             <?php if ($navPagina < $navTotalPaginas): ?>
-                <a href="<?= queryString(['aba' => 'navegacao', 'nav_filtro' => $navFiltro, 'nav_busca' => $navBusca, 'nav_pagina' => $navPagina + 1]) ?>">Proxima</a>
+                <a href="<?= queryString(['aba' => 'navegacao', 'nav_filtro' => $navFiltro, 'nav_busca' => $navBusca, 'nav_pagina' => $navPagina + 1]) ?>">Próxima</a>
             <?php endif; ?>
         </div>
     </div>
