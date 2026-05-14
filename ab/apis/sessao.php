@@ -55,8 +55,13 @@ $fingerprint = [
 
 foreach ($fingerprint as $col => $val) {
     if ($val !== null && $val !== '') {
-        $conditions[] = "$col = :$col";
-        $params[":$col"] = $val;
+        if ($col === 'client_name') {
+            $conditions[] = "$col LIKE :$col";
+            $params[":$col"] = $val . '%';
+        } else {
+            $conditions[] = "$col = :$col";
+            $params[":$col"] = $val;
+        }
     }
 }
 
@@ -70,6 +75,16 @@ foreach ($params as $key => $val) {
 }
 $result = $stmt->execute();
 $row = $result->fetchArray(SQLITE3_ASSOC);
+
+// Se não achou com fingerprint exato, fallback só por IP
+// (mesmo usuário pode acessar pelo computador e celular no mesmo IP)
+if (!$row) {
+    $stmt2 = $db->prepare('SELECT bloqueado FROM acessos WHERE ip = :ip ORDER BY id DESC LIMIT 1');
+    $stmt2->bindValue(':ip', $ip, SQLITE3_TEXT);
+    $result2 = $stmt2->execute();
+    $row = $result2->fetchArray(SQLITE3_ASSOC);
+}
+
 $db->close();
 
 if (!$row) {

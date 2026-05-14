@@ -14,7 +14,7 @@ $config = [
     // Template da tela de carregamento exibida durante a verificação
     // Arquivo HTML dentro de ab/templates/
     // Opções disponíveis: 'spinner.html' (padrão), 'cloudflare.html'
-    'telaCarregamento' => 'cloudflare.html',
+    'telaCarregamento' => 'spinner.html',
 
 
     // Score mínimo para bloquear o visitante (padrão: 50)
@@ -239,7 +239,8 @@ $config = [
 
         // typeof Notification é undefined
         // Navegadores reais suportam a Notification API
-        'sem_notification' => ['ativo' => true, 'pts' => 10],
+        // DESATIVADO: iOS Safari não suportava até 16.4+ — falso positivo em iPhones
+        'sem_notification' => ['ativo' => false, 'pts' => 10],
 
         // typeof Worker ou typeof ServiceWorker é undefined
         // Navegadores modernos suportam Web Workers e Service Workers
@@ -352,7 +353,8 @@ $config = [
         // Math.tan(-1e300) retorna valor diferente de -1.4214488238747245
         // Engines JS diferentes podem ter implementações matemáticas ligeiramente
         // diferentes. Pode indicar ambiente modificado ou engine não-padrão
-        'math_diferente' => ['ativo' => true, 'pts' => 10],
+        // DESATIVADO: Safari/JavaScriptCore retorna valor diferente do V8 — falso positivo em iPhones
+        'math_diferente' => ['ativo' => false, 'pts' => 10],
 
     ],
 ];

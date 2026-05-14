@@ -48,8 +48,8 @@ if ($_abIp !== '') {
     $_abParams = [':ip' => $_abIp];
 
     if ($_abClientName !== null) {
-        $_abConditions[] = 'client_name = :client_name';
-        $_abParams[':client_name'] = $_abClientName;
+        $_abConditions[] = 'client_name LIKE :client_name';
+        $_abParams[':client_name'] = $_abClientName . '%';
     }
     if ($_abOsName !== null) {
         $_abConditions[] = 'os_name = :os_name';
@@ -69,6 +69,18 @@ if ($_abIp !== '') {
     }
     $_abResult = $_abStmt->execute();
     $_abRow = $_abResult->fetchArray(SQLITE3_ASSOC);
+
+    // Se não achou com fingerprint exato, fallback só por IP
+    // (mesmo usuário pode acessar pelo computador e celular no mesmo IP)
+    if (!$_abRow) {
+        $_abStmt2 = $_abDb->prepare(
+            'SELECT bloqueado FROM acessos WHERE ip = :ip ORDER BY id DESC LIMIT 1'
+        );
+        $_abStmt2->bindValue(':ip', $_abIp, SQLITE3_TEXT);
+        $_abResult2 = $_abStmt2->execute();
+        $_abRow = $_abResult2->fetchArray(SQLITE3_ASSOC);
+    }
+
     $_abDb->close();
 
     // Se tem registro bloqueado, redireciona imediatamente

@@ -11,7 +11,10 @@ ab/vendor/
 
 .idea/
 .vscode/
+.claude/
 *.swp
 *.swo
 Thumbs.db
 .DS_Store
+index.php
+agendar.php

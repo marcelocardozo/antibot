@@ -118,9 +118,11 @@ var AntiBot = (function () {
         if (!navigator.languages || navigator.languages.length === 0) add(chk('sem_idiomas'), 'sem_idiomas');
 
         // 14. PLATFORM MISMATCH
+        // iPhone/iPad UA contém "like Mac OS X" mas platform é "iPhone"/"iPad" — não é mismatch
         var platform = (navigator.platform || '').toLowerCase();
+        var isIosDevice = /iphone|ipad|ipod/.test(platform);
         if (ua.includes('windows') && platform && !platform.includes('win')) add(chk('platform_mismatch'), 'platform_mismatch');
-        if (ua.includes('mac') && platform && !platform.includes('mac')) add(chk('platform_mismatch'), 'platform_mismatch');
+        if (ua.includes('mac') && platform && !platform.includes('mac') && !isIosDevice) add(chk('platform_mismatch'), 'platform_mismatch');
         if (ua.includes('linux') && platform && !platform.includes('linux')) add(chk('platform_mismatch'), 'platform_mismatch');
 
         // 15. CHROME sem objeto chrome
