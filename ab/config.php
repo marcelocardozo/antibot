@@ -1,12 +1,17 @@
 <?php
 $config = [
 
-    // Página inicial onde o antibot roda a detecção completa
-    // Nas demais páginas, o script apenas verifica se o visitante já foi aprovado
+    // Página inicial onde o antibot roda a detecção completa e redireciona
+    // Nas demais páginas, o antibot verifica normalmente e libera a página se aprovado
     'paginaInicial' => 'index.php',
 
-    // URL de redirecionamento quando o visitante é aprovado, se vazio não redireciona
+    // URL de redirecionamento quando o visitante é aprovado na paginaInicial
+    // Se vazio, não redireciona (apenas libera a página)
     'redirectUrl' => '',
+
+    // Enviar dados do visitante na query string do redirect (IP, cidade, navegador, etc.)
+    // true = redireciona com ?ip=X&city=Y&..., false = redireciona sem dados
+    'enviarDados' => true,
 
     // Tempo mínimo da animação de verificação (ms)
     'tempoMinimo' => 5000,

@@ -30,6 +30,79 @@ var AntiBot = (function () {
         return '/ab';
     }
 
+    var AB_PATH = detectAbPath();
+
+    /* ───────── COLETA COMPLETA DE DADOS ───────── */
+    /**
+     * Monta um objeto único com os campos de:
+     *  - device_detector (bot, client_*, device_*, os_*)
+     *  - proxycheck.io  (asn, hostname, provider, isocode, proxy, vpn, ...)
+     *
+     * Se proxyData/deviceData já existirem em memória, reutiliza.
+     * Caso contrário, busca via fetch nas APIs server-side.
+     */
+    function coletarDadosCompletos(proxyData, deviceData) {
+        var promiseDados;
+        if (proxyData && deviceData) {
+            promiseDados = Promise.resolve([proxyData, deviceData]);
+        } else {
+            promiseDados = Promise.all([
+                fetch(AB_PATH + '/apis/proxycheckio.php')
+                    .then(function (r) { return r.json(); })
+                    .catch(function () { return {}; }),
+                fetch(AB_PATH + '/apis/device_detector.php')
+                    .then(function (r) { return r.json(); })
+                    .catch(function () { return {}; })
+            ]);
+        }
+
+        return promiseDados.then(function (results) {
+            var p = results[0] || {};
+            var d = results[1] || {};
+            return {
+                bot:             d.bot             ?? null,
+                client_name:     d.client_name     ?? null,
+                client_type:     d.client_type     ?? null,
+                client_version:  d.client_version  ?? null,
+                device_brand:    d.device_brand    ?? null,
+                device_model:    d.device_model    ?? null,
+                device_type:     d.device_type     ?? null,
+                os_name:         d.os_name         ?? null,
+                os_platform:     d.os_platform     ?? null,
+                os_version:      d.os_version      ?? null,
+                os_family:       d.os_family       ?? null,
+                ip:              p.ip              ?? null,
+                asn:             p.asn             ?? null,
+                hostname:        p.hostname        ?? null,
+                provider:        p.provider        ?? null,
+                organisation:    p.organisation    ?? null,
+                isocode:         p.isocode         ?? null,
+                regioncode:      p.regioncode      ?? null,
+                city:            p.city            ?? null,
+                proxy:           p.proxy           ?? null,
+                vpn:             p.vpn             ?? null
+            };
+        });
+    }
+
+    /* ───────── QUERY STRING ───────── */
+
+    function montarQueryString(dados) {
+        var params = new URLSearchParams();
+        Object.keys(dados).forEach(function (key) {
+            var v = dados[key];
+            if (v !== null && v !== undefined && v !== '') {
+                params.append(key, v);
+            }
+        });
+        return params.toString();
+    }
+
+    function anexarQuery(url, query) {
+        if (!query) return url;
+        return url + (url.indexOf('?') === -1 ? '?' : '&') + query;
+    }
+
     /* ───────── DETECÇÃO ───────── */
 
     function runDetection(regras) {
@@ -48,7 +121,7 @@ var AntiBot = (function () {
         // 1. WEBDRIVER FLAG
         if (navigator.webdriver === true) add(chk('webdriver'), 'webdriver');
 
-        // 2. CHROMEDRIVER — variáveis injetadas no document
+        // 2. CHROMEDRIVER
         if (chk('chromedriver')) {
             try {
                 var docKeys = Object.keys(document);
@@ -58,7 +131,7 @@ var AntiBot = (function () {
             } catch (e) {}
         }
 
-        // 3. SELENIUM / WEBDRIVER propriedades globais
+        // 3. SELENIUM / WEBDRIVER
         if (chk('selenium')) {
             var seleniumProps = [
                 '__webdriver_evaluate', '__selenium_evaluate',
@@ -113,12 +186,11 @@ var AntiBot = (function () {
         var ua = navigator.userAgent.toLowerCase();
         if (/headless|phantom|slimer|puppeteer|playwright|selenium|cypress|nightmarejs|webdriverio|testcafe|browserless|crawler|spider|bot|scrapy|wget|curl|httpie|python-requests|python-urllib|java\/|httpclient|libwww|mechanize|aiohttp|node-fetch|axios\/|got\/|undici/.test(ua)) add(chk('ua_suspeito'), 'ua_suspeito');
 
-        // 13. FINGERPRINT — plugins e idiomas
+        // 13. FINGERPRINT
         if (navigator.plugins.length === 0) add(chk('sem_plugins'), 'sem_plugins');
         if (!navigator.languages || navigator.languages.length === 0) add(chk('sem_idiomas'), 'sem_idiomas');
 
         // 14. PLATFORM MISMATCH
-        // iPhone/iPad UA contém "like Mac OS X" mas platform é "iPhone"/"iPad" — não é mismatch
         var platform = (navigator.platform || '').toLowerCase();
         var isIosDevice = /iphone|ipad|ipod/.test(platform);
         if (ua.includes('windows') && platform && !platform.includes('win')) add(chk('platform_mismatch'), 'platform_mismatch');
@@ -135,7 +207,7 @@ var AntiBot = (function () {
         // 17. TIMING
         if (performance.now() < 50) add(chk('timing_rapido'), 'timing_rapido');
 
-        // 18. HEADLESS — recursos ausentes
+        // 18. HEADLESS
         if (navigator.hardwareConcurrency === undefined) add(chk('sem_cpu_cores'), 'sem_cpu_cores');
         if (!window.speechSynthesis) add(chk('sem_speech'), 'sem_speech');
         if (typeof window.SharedArrayBuffer === 'undefined' && ua.includes('chrome')) add(chk('sem_shared_buffer'), 'sem_shared_buffer');
@@ -366,17 +438,15 @@ var AntiBot = (function () {
 
     /* ───────── CORE ───────── */
 
-    function start(cfg, AB_PATH) {
+    function start(cfg) {
         var URL_404 = AB_PATH + '/templates/404.html';
         var TEMPO_MINIMO = cfg.tempoMinimo;
         var SCORE_MINIMO = cfg.scoreMinimo;
         var regras = cfg.regras;
         var inicio = Date.now();
 
-        // Run client-side detection
         var detection = runDetection(regras);
 
-        // Fetch server-side APIs
         Promise.all([
             fetch(AB_PATH + '/apis/proxycheckio.php').then(function (r) { return r.json(); }).catch(function () { return { status: 'erro' }; }),
             fetch(AB_PATH + '/apis/device_detector.php').then(function (r) { return r.json(); }).catch(function () { return { status: 'erro' }; })
@@ -400,7 +470,6 @@ var AntiBot = (function () {
 
             var ehBot = detection.getScore() >= SCORE_MINIMO;
 
-            // Motivos de bloqueio
             var motivos = [];
             if (ehBot) motivos.push('score=' + detection.getScore() + ' (' + detection.getHits().join(', ') + ')');
             if (cfg.bloquear_bot !== false && bot === 'true') motivos.push('bot');
@@ -451,16 +520,35 @@ var AntiBot = (function () {
 
                     setTimeout(function () {
                         if (bloqueado) {
-                            registrarNavegacao();
                             fetch(URL_404)
                                 .then(function (r) { return r.text(); })
                                 .then(function (html) { document.open(); document.write(html); document.close(); })
                                 .catch(function () { document.documentElement.innerHTML = '<h1>404</h1>'; });
                         } else {
-                            sessionStorage.setItem('ab_id_verify', result.id);
-                            registrarNavegacao();
-                            if (cfg.redirectUrl) window.location.href = cfg.redirectUrl;
-                            else liberarPagina();
+                            // Verifica se a página atual é a paginaInicial
+                            var pathname = window.location.pathname;
+                            var paginaIni = cfg.paginaInicial || '';
+                            var ehPaginaInicial = pathname === paginaIni || pathname.endsWith('/' + paginaIni);
+                            if (!ehPaginaInicial && pathname.endsWith('/')) {
+                                var filename = paginaIni.split('/').pop();
+                                if (filename) {
+                                    var tentativa = pathname + filename;
+                                    ehPaginaInicial = tentativa === paginaIni || tentativa.endsWith(paginaIni);
+                                }
+                            }
+
+                            if (ehPaginaInicial && cfg.redirectUrl) {
+                                if (cfg.enviarDados !== false) {
+                                    coletarDadosCompletos(proxyData, deviceData).then(function (dadosCompletos) {
+                                        var queryUrl = montarQueryString(dadosCompletos);
+                                        window.location.href = anexarQuery(cfg.redirectUrl, queryUrl);
+                                    });
+                                } else {
+                                    window.location.href = cfg.redirectUrl;
+                                }
+                            } else {
+                                liberarPagina();
+                            }
                         }
                     }, restante);
                 })
@@ -475,11 +563,8 @@ var AntiBot = (function () {
 
     /* ───────── BOOT ───────── */
 
-    var AB_PATH = detectAbPath();
-
     var _abSpinner = null;
 
-    // Esconde a página e mostra overlay até a verificação concluir
     function esconderPagina() {
         document.documentElement.style.visibility = 'hidden';
         document.documentElement.style.overflow = 'hidden';
@@ -490,7 +575,6 @@ var AntiBot = (function () {
         document.documentElement.appendChild(_abSpinner);
     }
 
-    // Carrega o template da tela de carregamento dentro do overlay
     function carregarTelaCarregamento(cfg, abPath) {
         if (!_abSpinner) return;
         var tela = cfg.telaCarregamento;
@@ -501,7 +585,6 @@ var AntiBot = (function () {
         _abSpinner.appendChild(iframe);
     }
 
-    // Libera a página após aprovação confirmada no banco
     function liberarPagina() {
         if (_abSpinner && _abSpinner.parentNode) {
             _abSpinner.parentNode.removeChild(_abSpinner);
@@ -517,109 +600,11 @@ var AntiBot = (function () {
             .then(function (r) { return r.json(); })
             .then(function (cfg) {
                 carregarTelaCarregamento(cfg, AB_PATH);
-
-                var paginaIni = cfg.paginaInicial;
-                var pathname = window.location.pathname;
-                // Verifica se é a página inicial considerando subpastas e acesso sem filename
-                // Ex: paginaInicial='/index.php' deve casar com '/antibot/index.php' e '/antibot/'
-                var ehPaginaInicial = pathname === paginaIni || pathname.endsWith(paginaIni);
-                if (!ehPaginaInicial && pathname.endsWith('/')) {
-                    // Acesso ao diretório sem filename (ex: /antibot/ em vez de /antibot/index.php)
-                    // Concatena o filename do paginaInicial e verifica se bate
-                    var filename = paginaIni.split('/').pop(); // ex: 'index.php'
-                    var tentativa = pathname + filename;       // ex: '/antibot/index.php'
-                    ehPaginaInicial = tentativa === paginaIni || tentativa.endsWith(paginaIni);
-                }
-
-                // Monta fingerprint do navegador para consulta por IP
-                function buildFingerprint() {
-                    var ua = navigator.userAgent || '';
-                    var fp = [];
-                    if (/Edg\//i.test(ua)) fp.push('client_name=Edge');
-                    else if (/OPR\//i.test(ua) || /Opera/i.test(ua)) fp.push('client_name=Opera');
-                    else if (/Firefox\//i.test(ua)) fp.push('client_name=Firefox');
-                    else if (/Chrome\//i.test(ua)) fp.push('client_name=Chrome');
-                    else if (/Safari\//i.test(ua)) fp.push('client_name=Safari');
-                    if (/Windows/i.test(ua)) fp.push('os_name=Windows');
-                    else if (/Android/i.test(ua)) fp.push('os_name=Android');
-                    else if (/iPhone|iPad|iPod/i.test(ua)) fp.push('os_name=iOS');
-                    else if (/Mac OS/i.test(ua)) fp.push('os_name=Mac');
-                    else if (/Linux/i.test(ua)) fp.push('os_name=GNU/Linux');
-                    if (/Mobi/i.test(ua)) fp.push('device_type=smartphone');
-                    else if (/Tablet|iPad/i.test(ua)) fp.push('device_type=tablet');
-                    else fp.push('device_type=desktop');
-                    return fp.length ? '?' + fp.join('&') : '';
-                }
-
-                // Bloqueia o visitante mostrando a página 404
-                function bloquear() {
-                    fetch(AB_PATH + '/templates/404.html')
-                        .then(function (r) { return r.text(); })
-                        .then(function (html) { document.open(); document.write(html); document.close(); })
-                        .catch(function () { document.documentElement.innerHTML = '<h1>404</h1>'; });
-                }
-
-                var savedId = sessionStorage.getItem('ab_id_verify');
-
-                if (savedId) {
-                    // Tem id salvo — verifica no banco
-                    fetch(AB_PATH + '/apis/sessao.php?id=' + encodeURIComponent(savedId))
-                        .then(function (r) { return r.json(); })
-                        .then(function (sessao) {
-                            if (sessao.status === 'bloqueado') {
-                                registrarNavegacao();
-                                bloquear();
-                            } else if (sessao.status === 'aprovado') {
-                                registrarNavegacao();
-                                if (ehPaginaInicial && cfg.redirectUrl) window.location.href = cfg.redirectUrl;
-                                else liberarPagina();
-                            } else {
-                                sessionStorage.removeItem('ab_id_verify');
-                                start(cfg, AB_PATH);
-                            }
-                        })
-                        .catch(function () {
-                            start(cfg, AB_PATH);
-                        });
-                } else {
-                    // Sem id — verifica pelo IP + fingerprint
-                    fetch(AB_PATH + '/apis/sessao.php' + buildFingerprint())
-                        .then(function (r) { return r.json(); })
-                        .then(function (sessao) {
-                            if (sessao.status === 'bloqueado') {
-                                registrarNavegacao();
-                                bloquear();
-                            } else if (sessao.status === 'aprovado') {
-                                registrarNavegacao();
-                                if (ehPaginaInicial && cfg.redirectUrl) window.location.href = cfg.redirectUrl;
-                                else liberarPagina();
-                            } else {
-                                // Novo visitante — executa detecção completa
-                                start(cfg, AB_PATH);
-                            }
-                        })
-                        .catch(function () {
-                            start(cfg, AB_PATH);
-                        });
-                }
+                start(cfg);
             })
             .catch(function () {
                 liberarPagina();
             });
-    }
-
-    // Registra a página visitada (todos os visitantes, inclusive bloqueados)
-    function registrarNavegacao() {
-        var acessoId = sessionStorage.getItem('ab_id_verify');
-        fetch(AB_PATH + '/apis/navegacao.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                acesso_id: acessoId ? parseInt(acessoId, 10) : null,
-                url: window.location.href,
-                referrer: document.referrer || null
-            })
-        }).catch(function () {});
     }
 
     if (document.body) {
@@ -630,5 +615,5 @@ var AntiBot = (function () {
         });
     }
 
-    return { AB_PATH: AB_PATH };
+    return { AB_PATH: AB_PATH, coletarDadosCompletos: coletarDadosCompletos };
 })();

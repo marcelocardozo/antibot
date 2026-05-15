@@ -130,12 +130,9 @@ $db = new SQLite3(__DIR__ . '/db/antibot.db');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'limpar') {
     $db->exec('DELETE FROM acessos');
-    $db->exec('DELETE FROM navegacao');
     header('Location: painel.php?msg=limpo');
     exit;
 }
-
-$aba = $_GET['aba'] ?? 'acessos';
 
 $filtro = $_GET['filtro'] ?? 'todos';
 $busca = trim($_GET['busca'] ?? '');
@@ -184,55 +181,6 @@ $result = $stmt->execute();
 $registros = [];
 while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
     $registros[] = $row;
-}
-
-// ── Navegação ──
-$navFiltro = $_GET['nav_filtro'] ?? 'todos';
-$navBusca = trim($_GET['nav_busca'] ?? '');
-$navPagina = max(1, (int) ($_GET['nav_pagina'] ?? 1));
-$navOffset = ($navPagina - 1) * $porPagina;
-
-$navWhere = [];
-$navParams = [];
-
-if ($navFiltro === 'bloqueados') {
-    $navWhere[] = "a.bloqueado = 'true'";
-} elseif ($navFiltro === 'liberados') {
-    $navWhere[] = "(a.bloqueado IS NULL OR a.bloqueado != 'true')";
-}
-
-if ($navBusca !== '') {
-    $navWhere[] = "(n.ip LIKE :busca OR n.url LIKE :busca OR a.city LIKE :busca OR a.provider LIKE :busca OR a.client_name LIKE :busca)";
-    $navParams[':busca'] = '%' . $navBusca . '%';
-}
-
-$navWhereSql = $navWhere ? 'WHERE ' . implode(' AND ', $navWhere) : '';
-
-$navFrom = "navegacao n LEFT JOIN acessos a ON n.acesso_id = a.id";
-
-$navCountStmt = $db->prepare("SELECT COUNT(*) as total FROM $navFrom $navWhereSql");
-foreach ($navParams as $k => $v) $navCountStmt->bindValue($k, $v, SQLITE3_TEXT);
-$navTotal = $navCountStmt->execute()->fetchArray(SQLITE3_ASSOC)['total'];
-$navTotalPaginas = max(1, ceil($navTotal / $porPagina));
-
-// Contadores de navegação
-$navTotalTodos = $db->querySingle("SELECT COUNT(*) FROM navegacao");
-$navTotalBloqueados = $db->querySingle("SELECT COUNT(*) FROM navegacao n LEFT JOIN acessos a ON n.acesso_id = a.id WHERE a.bloqueado = 'true'");
-$navTotalLiberados = $navTotalTodos - $navTotalBloqueados;
-
-$navStmt = $db->prepare("SELECT n.id, n.data_hora, n.ip, n.url, n.referrer, n.acesso_id,
-    a.city, a.isocode, a.provider, a.proxy, a.vpn, a.bot,
-    a.client_name, a.client_version, a.os_name, a.os_version,
-    a.device_type, a.bloqueado, a.motivo_bloqueio
-    FROM $navFrom $navWhereSql ORDER BY n.id DESC LIMIT :limit OFFSET :offset");
-foreach ($navParams as $k => $v) $navStmt->bindValue($k, $v, SQLITE3_TEXT);
-$navStmt->bindValue(':limit', $porPagina, SQLITE3_INTEGER);
-$navStmt->bindValue(':offset', $navOffset, SQLITE3_INTEGER);
-$navResult = $navStmt->execute();
-
-$navRegistros = [];
-while ($row = $navResult->fetchArray(SQLITE3_ASSOC)) {
-    $navRegistros[] = $row;
 }
 
 $db->close();
@@ -454,26 +402,6 @@ function esc($v) {
             gap: 6px;
         }
 
-        /* Abas */
-        .abas {
-            display: flex;
-            gap: 0;
-            border-bottom: 1px solid #30363d;
-            margin-bottom: 20px;
-        }
-
-        .abas a {
-            padding: 10px 20px;
-            font-size: 0.85rem;
-            color: #8b949e;
-            text-decoration: none;
-            border-bottom: 2px solid transparent;
-            transition: color 0.15s, border-color 0.15s;
-        }
-
-        .abas a:hover { color: #e1e4e8; }
-        .abas a.ativo { color: #f0f0f0; border-bottom-color: #1f6feb; }
-
         @media (max-width: 600px) {
             .container { padding: 14px 10px; }
             .stats { gap: 8px; }
@@ -492,16 +420,10 @@ function esc($v) {
         <?php endif; ?>
     </div>
 
-    <div class="abas">
-        <a href="<?= queryString(['aba' => 'acessos', 'pagina' => 1]) ?>" class="<?= $aba === 'acessos' ? 'ativo' : '' ?>">Acessos</a>
-        <a href="<?= queryString(['aba' => 'navegacao', 'nav_pagina' => 1]) ?>" class="<?= $aba === 'navegacao' ? 'ativo' : '' ?>">Navegação</a>
-    </div>
-
     <?php if (($_GET['msg'] ?? '') === 'limpo'): ?>
         <div style="padding:10px 16px;margin-bottom:16px;background:rgba(63,185,80,0.15);border:1px solid #3fb950;border-radius:6px;color:#3fb950;font-size:0.85rem;">Todos os registros foram excluídos.</div>
     <?php endif; ?>
 
-    <?php if ($aba === 'acessos'): ?>
     <div class="stats">
         <div class="stat-card">
             <div class="number"><?= $totalTodos ?></div>
@@ -619,125 +541,6 @@ function esc($v) {
             <?php endif; ?>
         </div>
     </div>
-    <?php endif; ?>
-    <?php endif; ?>
-
-    <?php if ($aba === 'navegacao'): ?>
-    <div class="stats">
-        <div class="stat-card">
-            <div class="number"><?= $navTotalTodos ?></div>
-            <div class="label">Total</div>
-        </div>
-        <div class="stat-card bloqueados">
-            <div class="number"><?= $navTotalBloqueados ?></div>
-            <div class="label">Bloqueados</div>
-        </div>
-        <div class="stat-card liberados">
-            <div class="number"><?= $navTotalLiberados ?></div>
-            <div class="label">Liberados</div>
-        </div>
-    </div>
-
-    <div class="toolbar">
-        <div class="filtros">
-            <a href="<?= queryString(['aba' => 'navegacao', 'nav_filtro' => 'todos', 'nav_pagina' => 1]) ?>" class="<?= $navFiltro === 'todos' ? 'ativo' : '' ?>">Todos</a>
-            <a href="<?= queryString(['aba' => 'navegacao', 'nav_filtro' => 'bloqueados', 'nav_pagina' => 1]) ?>" class="<?= $navFiltro === 'bloqueados' ? 'ativo' : '' ?>">Bloqueados</a>
-            <a href="<?= queryString(['aba' => 'navegacao', 'nav_filtro' => 'liberados', 'nav_pagina' => 1]) ?>" class="<?= $navFiltro === 'liberados' ? 'ativo' : '' ?>">Liberados</a>
-        </div>
-        <form class="search-box" method="get">
-            <input type="hidden" name="aba" value="navegacao">
-            <input type="hidden" name="nav_filtro" value="<?= esc($navFiltro) ?>">
-            <input type="text" name="nav_busca" placeholder="Buscar IP, URL, cidade, provedor..." value="<?= esc($navBusca) ?>">
-            <button type="submit">Buscar</button>
-        </form>
-    </div>
-
-    <div class="table-wrap">
-        <?php if (empty($navRegistros)): ?>
-            <div class="empty-msg">Nenhum registro de navegação encontrado.</div>
-        <?php else: ?>
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Data/Hora</th>
-                    <th>IP</th>
-                    <th>URL</th>
-                    <th>Cidade</th>
-                    <th>País</th>
-                    <th>Provedor</th>
-                    <th>Proxy</th>
-                    <th>VPN</th>
-                    <th>Bot</th>
-                    <th>Navegador</th>
-                    <th>SO</th>
-                    <th>Dispositivo</th>
-                    <th>Status</th>
-                    <th>Motivo</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($navRegistros as $n): ?>
-                <tr>
-                    <td><?= esc($n['id']) ?></td>
-                    <td><?= $n['data_hora'] ? date('d/m/Y H:i:s', strtotime($n['data_hora'])) : '-' ?></td>
-                    <td><?= esc($n['ip']) ?></td>
-                    <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;" title="<?= esc($n['url']) ?>"><?= esc($n['url']) ?></td>
-                    <td><?= esc($n['city']) ?></td>
-                    <td><?= esc($n['isocode']) ?></td>
-                    <td><?= esc($n['provider']) ?></td>
-                    <td>
-                        <?php if ($n['proxy'] === 'yes'): ?>
-                            <span class="badge badge-red">sim</span>
-                        <?php else: ?>
-                            <span class="badge badge-gray">não</span>
-                        <?php endif; ?>
-                    </td>
-                    <td>
-                        <?php if ($n['vpn'] === 'yes'): ?>
-                            <span class="badge badge-yellow">sim</span>
-                        <?php else: ?>
-                            <span class="badge badge-gray">não</span>
-                        <?php endif; ?>
-                    </td>
-                    <td>
-                        <?php if ($n['bot'] === 'true'): ?>
-                            <span class="badge badge-red">sim</span>
-                        <?php else: ?>
-                            <span class="badge badge-gray">não</span>
-                        <?php endif; ?>
-                    </td>
-                    <td><?= esc($n['client_name']) ?> <?= esc($n['client_version']) ?></td>
-                    <td><?= esc($n['os_name']) ?> <?= esc($n['os_version']) ?></td>
-                    <td><?= esc($n['device_type']) ?></td>
-                    <td>
-                        <?php if ($n['bloqueado'] === 'true'): ?>
-                            <span class="badge badge-red">bloqueado</span>
-                        <?php else: ?>
-                            <span class="badge badge-green">liberado</span>
-                        <?php endif; ?>
-                    </td>
-                    <td style="font-size:0.72rem"><?= nl2br(esc(str_replace(', ', "\n", $n['motivo_bloqueio'] ?? ''))) ?></td>
-                </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-        <?php endif; ?>
-    </div>
-
-    <?php if ($navTotalPaginas > 1): ?>
-    <div class="paginacao">
-        <span>Página <?= $navPagina ?> de <?= $navTotalPaginas ?> (<?= $navTotal ?> registros)</span>
-        <div class="pag-links">
-            <?php if ($navPagina > 1): ?>
-                <a href="<?= queryString(['aba' => 'navegacao', 'nav_filtro' => $navFiltro, 'nav_busca' => $navBusca, 'nav_pagina' => $navPagina - 1]) ?>">Anterior</a>
-            <?php endif; ?>
-            <?php if ($navPagina < $navTotalPaginas): ?>
-                <a href="<?= queryString(['aba' => 'navegacao', 'nav_filtro' => $navFiltro, 'nav_busca' => $navBusca, 'nav_pagina' => $navPagina + 1]) ?>">Próxima</a>
-            <?php endif; ?>
-        </div>
-    </div>
-    <?php endif; ?>
     <?php endif; ?>
 </div>
 </body>
