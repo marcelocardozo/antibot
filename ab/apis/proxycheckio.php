@@ -52,6 +52,12 @@ $ip = $_SERVER['HTTP_CF_CONNECTING_IP']
     ?? $_SERVER['REMOTE_ADDR']
     ?? '';
 
+// X-Forwarded-For pode conter múltiplos IPs: "cliente, proxy1, proxy2"
+// Pega apenas o primeiro (IP real do visitante)
+if (str_contains($ip, ',')) {
+    $ip = trim(explode(',', $ip)[0]);
+}
+
 // Em desenvolvimento, usa IP fixo para testes
 if (in_array($ip, ['127.0.0.1', '::1'], true)) {
     $ip = $env['TEST_IP'] ?? '127.0.0.1';
@@ -59,7 +65,7 @@ if (in_array($ip, ['127.0.0.1', '::1'], true)) {
 
 if ($ip === '' || !filter_var($ip, FILTER_VALIDATE_IP)) {
     http_response_code(400);
-    echo json_encode(['status' => 'erro']);
+    echo json_encode(['status' => 'erro', 'ip' => $ip, 'server_flags' => $serverFlags]);
     exit;
 }
 
@@ -89,19 +95,35 @@ curl_close($ch);
 
 if ($response === false) {
     http_response_code(502);
-    echo json_encode(['status' => 'erro']);
+    echo json_encode(['status' => 'erro', 'ip' => $ip, 'server_flags' => $serverFlags]);
     exit;
 }
 
 $data = json_decode($response, true);
 
-if (json_last_error() !== JSON_ERROR_NONE || ($data['status'] ?? '') !== 'ok' || !isset($data[$ip])) {
+if (json_last_error() !== JSON_ERROR_NONE || ($data['status'] ?? '') !== 'ok') {
     http_response_code(502);
-    echo json_encode(['status' => 'erro']);
+    echo json_encode(['status' => 'erro', 'ip' => $ip, 'server_flags' => $serverFlags]);
     exit;
 }
 
-$info = $data[$ip];
+// ProxyCheck.io pode retornar IPv6 em formato diferente (expandido vs comprimido)
+// Procura a chave de IP na resposta independente do formato
+$info = $data[$ip] ?? null;
+if ($info === null) {
+    foreach ($data as $key => $value) {
+        if ($key !== 'status' && is_array($value)) {
+            $info = $value;
+            break;
+        }
+    }
+}
+
+if ($info === null) {
+    http_response_code(502);
+    echo json_encode(['status' => 'erro', 'ip' => $ip, 'server_flags' => $serverFlags]);
+    exit;
+}
 
 echo json_encode([
     'status'       => 'success',
